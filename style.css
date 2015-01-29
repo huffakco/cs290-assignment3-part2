@@ -1,0 +1,191 @@
+/* Assignment 3 Part 2*/
+table {
+  /* position the table */
+  left: 10px;
+  position: relative;
+
+    /* outline */
+  border: 1px solid #777;  /*gray*/
+  padding: 1px;
+ 
+  /* Adjust width as page resizes */
+  width: 90%;  
+}
+
+/* apply styling to table cells */
+/* from the HelloWorld.html example in jwolford video lecture */
+td {
+  border: 1px solid #777;
+  height: 1em;
+  text-align: center;
+  width: 1em;
+ }
+ 
+th {
+  border: 1px solid #777;
+  height: 1em;
+  text-align: center;
+  width: 1em;
+}
+
+/* make first column italic */
+tbody > tr > th:nth-child(1) {
+  font-style: italic;
+  font-weight: normal;
+}
+
+/* make the second column data items blue */
+tbody > tr > td:nth-child(2) {
+  color: #f00;  
+}
+
+/* make the third column data items blue */
+tbody > tr > td:nth-child(4){
+  color: #00f;   
+}
+
+/* make the background of the odd rows light blue */
+tbody > tr:nth-child(odd) {
+ background-color: #9cf;
+}
+
+/* make the background of the even rows light green */
+tbody > tr:nth-child(even){
+ background-color: #8f8;
+}
+
+/* change the header background and set bold font */
+tbody tr:nth-child(1) th{
+ background-color: #fff; /*white*/
+ font-weight: bold;
+}
+    
+/* Part 2: List */
+dl {
+  /* Separate the assignment sections */
+  left: 10px;
+  margin: 0;
+  padding:0;
+  position: relative;
+  top: 10px;
+}
+
+/* Reference hover property and the sub-list element */
+/* Note class discussion eventually covered this method */
+dt:hover+dd {
+  background-color: #808;
+}
+
+/* Part 3: Boxes */
+/* not using div in selector per google-styleguide */
+.outer-content {
+  /* text box size and position */
+  /* text box spacing - 20px requirement */
+  /* text box color */
+  background-color: #f9b;  /*pink*/
+  height: 3em; 
+  left: 0;
+  margin-bottom: 20px;
+  margin-top: 20px;
+  position: relative;
+  padding: 0;
+  text-align: center;
+  width: 75%;
+
+}
+
+.inner-content{  
+  /* text box size and position */
+  /* text box color */
+  background-color: #0af;  /*lighter blue*/
+  float: center;
+  left: 12.5%;
+  /*height: 33%;*/
+  position: relative;
+  text-align: center;
+  top: 33%;
+  width: 75%;
+}
+
+/* Part 4: Forms */
+/*Form 1 Reference My first HTML form - Web developer guide at https:://developer.mozilla.org/en-US/docs/Web Guide HTML/Forms/ */
+body > fieldset {
+  border-color: #00f;
+  margin: 1em;
+  padding: 1em;
+}
+
+form {
+  /* position the form */
+  margin-bottom: .5em;
+  position: relative;
+}
+
+form div  + div {
+  /* separate the form elements */
+  margin-top: 1em;
+}
+
+label {
+  /* To make sure that all labels have the same size and are properly aligned */
+  display: inline-block;
+  text-align: right;
+  width: 5em;
+}
+
+input, textarea {
+  /* set the text field border */
+  border: 2px solid #777;
+
+  /* text box size */
+  min-width: 20em;
+}
+
+input:focus, textarea:focus {
+   /* To give a little highlight on active elements */
+   border-color: #00f;
+}
+
+fieldset button {
+  /* align text in submit button */
+  text-align: center;
+}
+
+fieldset > div > fieldset > p {
+  /* align the select text */
+  left: 0;
+  margin: 0;
+  text-align: left;
+}
+
+fieldset > div > fieldset > input {
+  /* make the radio buttons not to big */
+  margin: 1em;
+  min-width: 10px;
+}
+
+fieldset > div > fieldset > label {
+  /* align the labels with radio buttons */
+  text-align: left;
+}
+
+/* Part 5: Image and Paragraph */
+img {
+  /* position the image an make floating */
+  /* set width and height to 100x125 including border */
+  border: 1px solid #777;
+  float: left;
+  height: 123px;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  width: 98px;
+}
+
+
+body > div > p {
+  /* position two paragraphs of text */
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
