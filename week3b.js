@@ -64,11 +64,20 @@ function generate_table(arr,idName) {
   // arr is an array of HtmlObjList elements
   // get the reference for the body
 //  var body = document.getElementsByTagName("body")[0];
-  var pos = document.getElementById(idName);
   
   // creates a <table> element and a <tbody> element
-  var tbl     = document.createElement("table");
-  var tblBody = document.createElement("tbody");
+  var tbl     = document.createElement('table');
+  var tblBody = document.createElement('tbody');
+  
+  // Define header row
+  var row = document.createElement("tr");
+  var tblHead1 = document.createElement("th");
+  var tblName = document.createTextNode("Name");
+  var tblHead2 = document.createElement("th");
+  var tblDesc = document.createTextNode("Description");
+  tblHead1.appendChild(tblName);
+  tblHead2.appendChild(tblDesc); 
+  tblBody.appendChild(row);
  
   // creating all cells
   for (var i = 0; i < arr.length; i++) {
@@ -82,7 +91,7 @@ function generate_table(arr,idName) {
     var cell2 = document.createElement("td");
     var cellDescription = document.createTextNode(arr[i].description);
     var cell3 = document.createElement("td");
-    var cellLink = document.createTextNode(arr[i].link);
+    var cellLink = document.createTextNode(arr[i].url);
     cell1.appendChild(cellName);
     cell2.appendChild(cellDescription);
     cell3.appendChild(cellLink);
@@ -97,7 +106,7 @@ function generate_table(arr,idName) {
   // put the <tbody> in the <table>
   tbl.appendChild(tblBody);
   // appends <table> into <body>
-  pos.appendChild(tbl);
+  idName.appendChild(tbl);
   // sets the border attribute of tbl to 2;
   tbl.setAttribute("border", "2");
 
@@ -118,7 +127,7 @@ window.onload = function() {
   
   /* Update Favorites list */
   
-  var idName = document.getElementById('favoritesList');
+  var idName = document.getElementById('favoritesList'); 
   generate_table(favor.list, idName);
   var idName = document.getElementById('searchResults');
   generate_table(gist.list, idName);
@@ -163,13 +172,19 @@ function getGists() {
 } 
 
 /* use as test vehicle to make a list request */      
-function getGistList() {
+function getGistList(page) {
   var httpRequest = new XMLHttpRequest();
   if(!httpRequest){
     throw 'unable to create HttpRequest.';
   }
-  httpRequest.open('GET','https://developer.github.com/v3/gists/#list-gists');
+  // Copied from Nickolas Jurczak on Canvas Discussion
+  var baseurl = 'http://api.github.com/gists/public';
+  var url = baseurl + '?page=' + page + '&per_page=30';
+  httpRequest.open('GET',url);
+ //httpRequest.open('GET','http://api.github.com/gists/public');
+//  httpRequest.open('GET','https://developer.github.com/v3/gists/#list-gists');
   httpRequest.send();
+  return (httpRequest);
   
 } 
 
@@ -177,10 +192,10 @@ function getGistList() {
 /* define HTTP request object as a JavaScript */
 /* function that will handle processing the response */
 // httpRequest.onreadystatechange = gistFunction;
-var req = getGistList; 
-req.onreadystatechange = gistFunction;
+var req = getGistList(1); 
+req.onreadystatechange = gistFunction(req);
 
-function gistFunction() {
+function gistFunction(httpRequest) {
   /* function to handle the request response */
   if (httpRequest.readyState === 4) {
       // everything is good, the response is received

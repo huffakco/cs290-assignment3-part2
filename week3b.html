@@ -18,7 +18,7 @@
     <h1>Search Parameters</h1>
     <input type='text' name='demo-input'>
     <input type='button' name='save' onclick='saveDemoInput()' value = 'Save Text'>
-    <input type='button' name='getGist' onclick='getGistList()' value = 'Gist Request'>
+    <input type='button' name='getGist' onclick='getGistList(1)' value = 'Gist Request'>
     <div>
       <label>Page Number:</label>
       <input type='number' name='numerical_input' />
@@ -26,17 +26,15 @@
   </form>
   <br>
   <section>
-    <div>
     <h1>Favorites<h1>
-    <label id='favoritesList'></label>
-    </div>
+      <div id="favoritesList">
+      </div>
   </section>
   <br>
   <section>
-    <div>
     <h1>Search Results<h1>
-    <label id='searchResults'></label>
-    </div>
+       <div id="searchResults">
+      </div>
   </section>
  </body>
 </html>
