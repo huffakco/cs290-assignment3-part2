@@ -26,16 +26,23 @@
 function HtmlObject(params) {
   this.name = params.name;
   this.description = params.description;
-  this.url = params.url;
-
-  this.getHtmlObject = function() {
-  }
-  
+  this.url = params.url;  
 }
 
 /* use to store array of Html Objects */
 function HtmlObjList() {
   this.list = new Array();
+
+  this.loadHtmlObjList = function(arrHtmlObj){
+    this.list = arrHtmlObj;
+    return(this.list);
+  }
+  
+  this.addHtmlObject = function(htmlObj){
+    this.list.push(htmlObj);
+    return(this.list);
+  }
+  
 }
 
 /* temporary - create some object literals to use in loading testing */
@@ -70,14 +77,14 @@ function generate_table(arr,idName) {
   var tblBody = document.createElement('tbody');
   
   // Define header row
-  var row = document.createElement("tr");
+  var rowH = document.createElement("tr");
   var tblHead1 = document.createElement("th");
   var tblName = document.createTextNode("Name");
   var tblHead2 = document.createElement("th");
   var tblDesc = document.createTextNode("Description");
   tblHead1.appendChild(tblName);
   tblHead2.appendChild(tblDesc); 
-  tblBody.appendChild(row);
+  tblBody.appendChild(rowH);
  
   // creating all cells
   for (var i = 0; i < arr.length; i++) {
@@ -124,20 +131,34 @@ window.onload = function() {
     localStorage.setItem('userSettings',JSON.stringify(settings));
   }
   /* Update search parameters */
+  //setSearchParams(settingsStr.searchParams);
   
   /* Update Favorites list */
-  
+//  favor.list = loadHtmlObjList(settingsStr.favorites);
   var idName = document.getElementById('favoritesList'); 
   generate_table(favor.list, idName);
+
+  /* For now load fake results */
   var idName = document.getElementById('searchResults');
   generate_table(gist.list, idName);
   
 }
 
+function Search()
+{
+  page: 0;
+  language: '';
+};
+
+searchParams = new Search;
 
 
-  function saveDemoInput() {
-    localStorage.setItem('demoText',document.getElementsByName('demo-input')[0].value);
+  function saveLocalSearch() {
+    searchParams.page = getElementsByName('page_input')[0].value);
+    searchParams.language = getElementsByName('languag_input')[0].value);
+    userSettings=[searchParams,favor];
+    localStorage.setItem('userSettings',JSON.stringify(settings));
+//    localStorage.setItem('demoText',document.getElementsByName('demo-input')[0].value);
     }
     
     function clearLocalStorage() {
