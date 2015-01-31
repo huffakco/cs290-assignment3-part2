@@ -47,11 +47,12 @@ function HtmlObjList() {
 
 function Search()
 {
-  page: 0;
-  language: '';
+  page: 1;
+  language: 'ALL';
 };
 
 var searchParams = new Search;
+var gistPages = new GistPages;
 
 
 /* temporary - create some object literals to use in loading testing */
@@ -82,19 +83,21 @@ function generate_table(arr,idName) {
 //  var body = document.getElementsByTagName("body")[0];
   
   // creates a <table> element and a <tbody> element
-  var tbl     = document.createElement('table');
+  var tbl = document.createElement('table');
+  var tblHeader = document.createElement('thead');
   var tblBody = document.createElement('tbody');
-  
+
   // Define header row
- /* var rowH = document.createElement("tr");
+  var row = document.createElement("tr");
   var tblHead1 = document.createElement("th");
-  var tblName = document.createTextNode("Name");
+  tblHead1.innerHTML = "Name";
+  row.appendChild(tblHead1);
+  
   var tblHead2 = document.createElement("th");
-  var tblDesc = document.createTextNode("Description");
-  tblHead1.appendChild(tblName);
-  tblHead2.appendChild(tblDesc); 
-  tblBody.appendChild(rowH); */
- 
+  tblHead2.innerHTML = "Description";
+  row.appendChild(tblHead2);
+  tblHeader.appendChild(row);
+  
   // creating all cells
   for (var i = 0; i < arr.length; i++) {
     // creates a table row
@@ -120,8 +123,9 @@ function generate_table(arr,idName) {
   }
  
   // put the <tbody> in the <table>
+  tbl.appendChild(tblHeader);
   tbl.appendChild(tblBody);
-  // appends <table> into <body>
+   // appends <table> into <body>
   idName.appendChild(tbl);
   // sets the border attribute of tbl to 2;
   tbl.setAttribute("border", "2");
@@ -134,37 +138,30 @@ function generate_table(arr,idName) {
 window.onload = function() {
 /* load local storage into object */
   document.getElementById('output').innerHTML
-  var settingsStr = localStorage.getItem('userSettings');
-  if( settingsStr === null) {
-    settings = {'searchParams':[],'favorites':[]};
-    localStorage.setItem('userSettings',JSON.stringify(settings));
-  }
-  /* Update search parameters */
-  var userSettings = getLocalStorage();
-  document.getElementsByName('page_input')[0].value = userSettings[0].page;
-  document.getElementsByName('language_input')[0].value = userSettings[0].language;
-  searchParams = userSettings[0];
+ 
+  var settingsStr = getLocalStorage();
+ 
 
-  /* Assign onclick event to get Gist list button */
-  document.getElementsByName('getGist')[0].onclick = loadGistPages();
-  
   /* Update Favorites list */
-  favor = userSettings[1];
-  var idName = document.getElementById('favoritesList'); 
-  generate_table(favor.list, idName);
+    var idName = document.getElementById('favoritesList'); 
+    generate_table(favor.list, idName);
 
-  
-  /* For now load fake results */
-  var idName = document.getElementById('searchResults');
-  generate_table(gist.list, idName);
-  
+  searchParams = settingsStr[0];
+
 }
 
 
 function saveLocalSearch() {
   searchParams.page = document.getElementsByName('page_input')[0].value;
-  searchParams.language = document.getElementsByName('language_input')[0].value;
-  var userSettings=[searchParams,favor];
+  var languageTag = document.getElementsByName('language_input')
+  for (var i = 0; i < languageTag.length; i++)
+  {
+    if (languageTag[i].checked)
+    {
+      searchParams.language = document.getElementsByName('language_input')[i].value;
+    }
+  }
+  var userSettings=[searchParams,favor.list];
   localStorage.setItem('userSettings',JSON.stringify(userSettings));
 }
     
@@ -175,21 +172,22 @@ function clearLocalStorage() {
 function getLocalStorage(){
     var settings = localStorage.getItem('userSettings');
     var userSettings = JSON.parse(settings);
+    if (!userSettings)
+    {
+      userSettings = new Array;
+      tmpSearch = new Search;
+      tmpSearch.page = 1;
+      document.getElementsByName('page_input')[0].value = 1;
+      tmpSearch.language = "All";
+      document.getElementsByName('language_input')[0].checked = true;
+      userSettings.push(tmpSearch);
+      userSettings.push(new Array);
+      localStorage.setItem('userSettings',JSON.stringify(userSettings));
+    }
+ 
     return(userSettings);
 }
-     
- /* Copied from jwolford lecture OSU CS290 */    
-function urlStringify(obj){
-  var str = []
-  for(var prop in obj){
-      var s = encodeURIComponent(prop) + '=' + encodeURIComponent(obj[prop]);
-      str.push(s);
-  }
-  return str.join('&');
-}
-
-
-
+  
 /* use as test vehicle to make a basic request */      
 function getGists() {
   var httpRequest = new XMLHttpRequest();
@@ -201,55 +199,77 @@ function getGists() {
   
 } 
 
-/* use as test vehicle to make a list request */      
-function getGistList(page) {
-  var httpRequest = new XMLHttpRequest();
-  if(!httpRequest){
-    throw 'unable to create HttpRequest.';
+
+/* Object to manage the list of pages */
+function GistPages() {
+  this.reqPages = new Array;
+
+  this.loadGistPages = function() {
+    searchParams.page = document.getElementsByName('page_input')[0].value;
+    for (var i = 0; i < searchParams.page; i++)
+    {
+      var nextReq = new GistPage(i+1);
+      this.reqPages.push(nextReq);
+      console.log(this.reqPages[i].httpRequest);
+    }
   }
-  // Copied from Nickolas Jurczak on Canvas Discussion
-  var baseurl = 'http://api.github.com/gists/public';
-  var url = baseurl + '?page=' + page + '&per_page=30';
-  httpRequest.open('GET',url);
- //httpRequest.open('GET','http://api.github.com/gists/public');
-//  httpRequest.open('GET','https://developer.github.com/v3/gists/#list-gists');
-  httpRequest.send();
-  return (httpRequest);
+}
+
+/* Object to manage a request for a specific Gist page */
+ function GistPage(page) {
+   this.httpRequest = new XMLHttpRequest();
   
-} 
+   console.log(page);
 
-function loadGistPages() {
-  reqPages = new Array();
-  for (var i = 0; i < searchParams.page; i++)
-  {
-    reqPages.push(getGistList(i));
-    reqPages(i).onreadystatechange = gistFunction(i+1);
-  }
-}
-
+    if(!this.httpRequest){
+      throw 'unable to create HttpRequest.';
+    }
+    // Copied from Nickolas Jurczak on Canvas Discussion
+    this.baseurl = 'http://api.github.com/gists/public';
+    this.url = this.baseurl + '?page=' + page + '&per_page=30';
+    this.httpRequest.open('GET',this.url);
+    // Example URL calls from assignment input:
+    //httpRequest.open('GET','http://api.github.com/gists/public');
+    //  httpRequest.open('GET','https://developer.github.com/v3/gists/#list-gists');
+    this.httpRequest.send(); 
  
-/* define HTTP request object as a JavaScript */
-/* function that will handle processing the response */
-// httpRequest.onreadystatechange = gistFunction;
-//var req = getGistList(1); 
-//req.onreadystatechange = gistFunction(req);
+  /* Reference: */
+  /* https://developer.mozilla.org/en-US/docs/AJAX/Getting_Started */
+  /* function that will handle processing the response */
+  this.httpRequest.onreadystatechange = function() {
+    /* function to handle the request response */
+    if ((this.httpRequest !== 'undefined') && (this.httpRequest !== 'null'))
+    {
+      if (this.httpRequest.readyState === 4) {
+          // everything is good, the response is received
+          console.log(this.httpRequest.responseText);
+          /* define HTTP response as a JavaScript object */
+          var testJSON = JSON.parse(this.httpRequest.responseText);
+     
+          /* Add to list of HtmlObjects */
+     
+          
+     
+          /* Generate the table with results */
+          var idName = document.getElementById('searchResults');
+          generate_table(gist.list, idName);
+      } else {
+          // still not ready
+      }
 
-function gistFunction(httpRequest) {
-  /* function to handle the request response */
-  if (httpRequest.readyState === 4) {
-      // everything is good, the response is received
-      console.log(httpRequest.responseText);
-      var testJSON = JSON.parse(httpRequest.responseText);
-  } else {
-      // still not ready
-  }
-
-  /* check the response code */
-  if (httpRequest.status === 200) {
-      // perfect!
-  } else {
-      // there was a problem with the request,
-      // for example the response may contain a 404 (Not Found)
-      // or 500 (Internal Server Error) response code
-  }
-}
+        /* check the response code */
+        if (this.httpRequest.status === 200) {
+            // perfect!
+        } else {
+            // there was a problem with the request,
+            // for example the response may contain a 404 (Not Found)
+            // or 500 (Internal Server Error) response code
+        }
+      }
+      else {
+        console.log('onreadystatechange called but request not defined');
+      }
+  };
+  
+   
+};
