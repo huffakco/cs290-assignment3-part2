@@ -13,22 +13,20 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="output"></div>
-  <form>
+  <div>
     <h1>Search Parameters</h1>
+    <div id="output"></div>
     <div>
-      <div>
       <label>Page Number:</label>
-      <input type='number' name='numerical_input' />
+      <input type='number' name='page_input' />
       </div>
       <div>
-      <label>Language:</label>
-      <input type='language' name='language_input' />
-      </div>
-    <input type='button' name='save' onclick='saveLocalSearch()' value = 'Save Text'>
-    <input type='button' name='getGist' onclick='getGistList(1)' value = 'Gist Request'>
+        <label>Language:</label>
+        <input type='language' name='language_input' />
     </div>
-  </form>
+    <input type='button' name='save' onclick='saveLocalSearch()' value = 'Save Search'>
+    <input type='button' name='getGist'  value = 'Make Gist Request'>
+  </div>
   <br>
   <section>
     <h1>Favorites<h1>

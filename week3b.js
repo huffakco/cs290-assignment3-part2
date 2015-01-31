@@ -45,6 +45,15 @@ function HtmlObjList() {
   
 }
 
+function Search()
+{
+  page: 0;
+  language: '';
+};
+
+var searchParams = new Search;
+
+
 /* temporary - create some object literals to use in loading testing */
 favor = new HtmlObjList();
 h1 = new HtmlObject({name:'test1.html',description:'This is my test',url:'\\github.com'});;
@@ -77,14 +86,14 @@ function generate_table(arr,idName) {
   var tblBody = document.createElement('tbody');
   
   // Define header row
-  var rowH = document.createElement("tr");
+ /* var rowH = document.createElement("tr");
   var tblHead1 = document.createElement("th");
   var tblName = document.createTextNode("Name");
   var tblHead2 = document.createElement("th");
   var tblDesc = document.createTextNode("Description");
   tblHead1.appendChild(tblName);
   tblHead2.appendChild(tblDesc); 
-  tblBody.appendChild(rowH);
+  tblBody.appendChild(rowH); */
  
   // creating all cells
   for (var i = 0; i < arr.length; i++) {
@@ -131,45 +140,45 @@ window.onload = function() {
     localStorage.setItem('userSettings',JSON.stringify(settings));
   }
   /* Update search parameters */
-  //setSearchParams(settingsStr.searchParams);
+  var userSettings = getLocalStorage();
+  document.getElementsByName('page_input')[0].value = userSettings[0].page;
+  document.getElementsByName('language_input')[0].value = userSettings[0].language;
+  searchParams = userSettings[0];
+
+  /* Assign onclick event to get Gist list button */
+  document.getElementsByName('getGist')[0].onclick = loadGistPages();
   
   /* Update Favorites list */
-//  favor.list = loadHtmlObjList(settingsStr.favorites);
+  favor = userSettings[1];
   var idName = document.getElementById('favoritesList'); 
   generate_table(favor.list, idName);
 
+  
   /* For now load fake results */
   var idName = document.getElementById('searchResults');
   generate_table(gist.list, idName);
   
 }
 
-function Search()
-{
-  page: 0;
-  language: '';
-};
 
-searchParams = new Search;
-
-
-  function saveLocalSearch() {
-    searchParams.page = getElementsByName('page_input')[0].value);
-    searchParams.language = getElementsByName('languag_input')[0].value);
-    userSettings=[searchParams,favor];
-    localStorage.setItem('userSettings',JSON.stringify(settings));
-//    localStorage.setItem('demoText',document.getElementsByName('demo-input')[0].value);
-    }
+function saveLocalSearch() {
+  searchParams.page = document.getElementsByName('page_input')[0].value;
+  searchParams.language = document.getElementsByName('language_input')[0].value;
+  var userSettings=[searchParams,favor];
+  localStorage.setItem('userSettings',JSON.stringify(userSettings));
+}
     
-    function clearLocalStorage() {
+function clearLocalStorage() {
     localStorage.clear();
-    }
+}
     
-    function displayLocalStorage(){
-      document.getElementById('output').innerHTML = localStorage.getItem('demoText');
-      }
+function getLocalStorage(){
+    var settings = localStorage.getItem('userSettings');
+    var userSettings = JSON.parse(settings);
+    return(userSettings);
+}
      
-     
+ /* Copied from jwolford lecture OSU CS290 */    
 function urlStringify(obj){
   var str = []
   for(var prop in obj){
@@ -209,12 +218,21 @@ function getGistList(page) {
   
 } 
 
+function loadGistPages() {
+  reqPages = new Array();
+  for (var i = 0; i < searchParams.page; i++)
+  {
+    reqPages.push(getGistList(i));
+    reqPages(i).onreadystatechange = gistFunction(i+1);
+  }
+}
+
  
 /* define HTTP request object as a JavaScript */
 /* function that will handle processing the response */
 // httpRequest.onreadystatechange = gistFunction;
-var req = getGistList(1); 
-req.onreadystatechange = gistFunction(req);
+//var req = getGistList(1); 
+//req.onreadystatechange = gistFunction(req);
 
 function gistFunction(httpRequest) {
   /* function to handle the request response */
