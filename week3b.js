@@ -26,15 +26,19 @@
 function HtmlObject(params) {
   this.name = params.name;
   this.description = params.description;
-  this.url = params.url;  
+  this.url = params.url;
+  this.gistId = params.gistId;
   this.openGitPage = function() {
     console.log("double click");
   }
 }
 
 /* use to store array of Html Objects */
-function HtmlObjList() {
+function HtmlObjList(listId,listName,listStr) {
   this.list = new Array();
+  this.listId = listId;
+  this.listName = listName;
+  this.listStr = listStr;
  
   this.removeHtmlObjFromList = function(id){
     for (var i = id; i < this.list.length; i++)
@@ -43,8 +47,6 @@ function HtmlObjList() {
     }
     this.list.pop();
   }
-    
-
 }
 
 var convertGistPageToList = function(req,obj) {
@@ -67,14 +69,22 @@ var convertGistPageToList = function(req,obj) {
         {
           var desc = testJSON[i].description;
         }
+        if (prop === 'id')
+        {
+          var gistIdent = testJSON[i].id;
+        }
       }
-      if (!(htmlUrl) || (htmlUrl == null))
+      if (!(htmlUrl))
       {
-          htmlUrl = "https://gist.github.com";
+          var htmlUrl = "https://gist.github.com";
       }
-      if (!(desc) || (htmlUrl == null))
+      if (!(desc))
       {
-          desc = "generic description text";
+          var desc = "generic description text";
+      }
+      if (!(gistIdent))
+      {
+          var gistIdent = "12";
       }
       for (var prop in testJSON[i].files) {
         for (var subProp in testJSON[i].files[prop])
@@ -83,22 +93,31 @@ var convertGistPageToList = function(req,obj) {
             var language = testJSON[i].files[prop][subProp];
           }
       }
-      if (!(language) || (language == null))
+      if (!(language))
       {
           language = "Unknown";
       }
-      var newGistObj = new HtmlObject({name:language,description:desc,url:htmlUrl});
+      var newGistObj = new HtmlObject({name:language,description:desc,url:htmlUrl,gistId:gistIdent});
       
       if ((searchParams.language === "All") || (newGistObj.name === searchParams.language))
       {
-        obj.list.push(newGistObj);
+        var found = false;
+        for (var j = 0; j < favor.list.length; j++)
+        {
+          if (newGistObj.gistId === favor.list[j].gistId)
+          {
+            found = true;
+          }
+        }
+        if (!found) {
+          obj.list.push(newGistObj);
+        }
       }
     }
-
+    
     /* Generate the table with results */
-    var idName = document.getElementById('searchResults');
-    deleteTable(idName);
-    generate_table(obj.list, idName);
+    deleteTable(obj);
+    generate_table(obj);
 };
 
 
@@ -125,33 +144,28 @@ function Search()
 /* Create the objects to keep track of this page */
 var searchParams = new Search();
 var gistPages = new GistPages;
-favor = new HtmlObjList();
-gist = new HtmlObjList();
-
+favor = new HtmlObjList("favoritesList","fav_","Remove Favorite");
+gist = new HtmlObjList("searchResults","srch_","Select Favorite");
 
 
 /* Generate a table around HtmlObjList */
 /* Reference: */
 /* https://developer.mozilla.org/en-US/docs/Traversing_an_HTML_table_with_JavaScript_and_DOM_Interfaces */
-function generate_table(arr,idName) {
+function generate_table(arr) {
   // creates a <table> element and a <tbody> element
+  var elementId = document.getElementById(arr.listId);
   var tbl = document.createElement('table');
+  tbl.id = [arr.listId + "Table"];
+  tblID = [arr.listName + "Table"];
   var tblHeader = document.createElement('thead');
   var tblBody = document.createElement('tbody');
 
   // Define header row
-  var row = document.createElement("tr");
-  var tblHead1 = document.createElement("th");
-  if (idName.id === 'searchResults') {
-    tbl.id = "searchTable";
-    tblID = "srch";
-    tblHead1.innerHTML = "Select Favorite";    
-  } else {
-    tblHead1.innerHTML = "Remove Favorite";   
-    tbl.id = "favoriteTable";
-    tblID = "fav";
-  }
+  var row = document.createElement('tr');
   
+  // Define header elements
+  var tblHead1 = document.createElement('th');
+  tblHead1.innerHTML = arr.listStr;
   row.appendChild(tblHead1);
   
   var tblHead2 = document.createElement("th");
@@ -166,7 +180,7 @@ function generate_table(arr,idName) {
   tblHeader.appendChild(row); 
   
   // creating all cells
-  for (var i = 0; i < arr.length; i++) {
+  for (var i = 0; i < arr.list.length; i++) {
     // creates a table row
     var row = document.createElement("tr");
      // Create a <td> element and a text node, make the text
@@ -175,28 +189,15 @@ function generate_table(arr,idName) {
     var cell1 = document.createElement("td");
     var cellChkBox = document.createElement("input");
     cellChkBox.type = "checkbox";
-    cellChkBox.id = [tblID + "_" + i];
+    cellChkBox.id = [arr.listName + i];
     cellChkBox.checked = false;
     var cell2 = document.createElement("td");
-    var cellName = document.createTextNode(arr[i].name);
+    var cellName = document.createTextNode(arr.list[i].name);
     var cell3 = document.createElement("td");
-    //var list1 = document.createElement("dl");
-    //var listDesc = document.createElement("dt");
     var listLink = document.createElement("a");
-    listLink.id = [tblID + "lnk_" + i];
-    listLink.href = arr[i].url;
-    listLink.innerText = arr[i].description;
-    //var cellDescription = document.createTextNode(arr[i].description);
-    //listDesc.innerHTML = arr[i].description;
-    //var listUrl = document.createElement("dd");
-    //listUrl.innerHTML = arr[i].url;
-    
-//      <dl>
-//      <dt>List Item 1</dt>
-//      <dd>Sub List Item 1</dd>
-    //list1.appendChild(listDesc);
-    //list1.appendChild(listUrl);
-    //list1.appendChild(listLink);
+    listLink.id = [arr.listName + "lnk_" + i];
+    listLink.href = arr.list[i].url;
+    listLink.innerText = arr.list[i].description;
     cell1.appendChild(cellChkBox);
     cell2.appendChild(cellName);
     cell3.appendChild(listLink);
@@ -212,106 +213,98 @@ function generate_table(arr,idName) {
   tbl.appendChild(tblHeader);
   tbl.appendChild(tblBody);
    // appends <table> into <body>
-  idName.appendChild(tbl);
+  elementId.appendChild(tbl);
   // sets the border attribute of tbl to 2;
-  tbl.setAttribute("border", "2");
+  //tbl.setAttribute("border", "2");
   
   // add event listener to checkbox and link
-  for (var i = 0; i < arr.length; i++) {
-    cellChkBoxId = document.getElementById([tblID + "_" + i]);
-    if (idName.id === 'searchResults') {
+  for (var i = 0; i < arr.list.length; i++) {
+    var cellChkBoxId = document.getElementById([arr.listName + i]);
+    if (arr.listId === 'searchResults') {
         cellChkBoxId.onclick = handleChkBoxSearch;
     } else {
         cellChkBoxId.onclick = handleChkBoxFavorites;   
     }
-    linkClickId = document.getElementById([tblID + "lnk_" + i]);
+    var linkClickId = document.getElementById([arr.listName + "lnk_" + i]);
     linkClickId.ondblclick = linkClickId.href;
   }
 }
 
-function deleteTable(idName) {
- // idName.innerHTML = '';
-  if (idName.id === 'searchResults') {
-    tblId = "searchTable";
-  } else {
-    tblId = "favoriteTable";
-  }
-  var tableId = document.getElementById(tblId);
+function deleteTable(obj) {
+  elementId = document.getElementById(obj.listId);
+  var tableId = document.getElementById([obj.listId + "Table"]);
   if (tableId)
   {
     for (var i = 0; i < tableId.rows.length; i++) {
         tableId.deleteRow(i);
     }
     tableId.deleteTHead();
-    idName.innerHTML = '';
+    elementId.innerHTML = '';
   }
+  elementId.innerHTML = '';
 }
 
+getCheckedListItem = function(objList) {
+  var idx = -1;
+  for (var i = 0; i < objList.list.length; i++)
+  {
+    var id = document.getElementById([objList.listName + i]);
+    if (id.checked)
+    {
+      idx = i;
+    }
+  }
+  return(idx)
+}
   
 /* Handle updating the Search and moving to favorites */
 handleChkBoxSearch = function() {
   /* Find the checked item */
-  var idx = gist.list.length;
-  for (var i = 0; i < gist.list.length; i++)
+  var idx = getCheckedListItem(gist);
+  if (idx >= 0)
   {
-    var id = document.getElementById(["srch_" + i]);
-    if (id.checked)
-    {
-      /* Add item to favorites (indexed in gist object) */
-      var tmpObj = new HtmlObject({
-          name:gist.list[i].name,
-          description:gist.list[i].description ,
-          url:gist.list[i].url});
-      favor.list.push(tmpObj);
-      idx = i;
-    }
-  }
-
-  if (idx < gist.list.length) {
+    /* Add item to favorites (indexed in gist object) */
+    var tmpObj = new HtmlObject({
+        name:gist.list[idx].name,
+        description:gist.list[idx].description,
+        url:gist.list[idx].url,
+        gistId:gist.list[idx].gistId});
+    favor.list.push(tmpObj);
+    
     /* Resave favorites */
     saveLocalSearch();
   
-   /* Remove item from gist list */
+    /* Remove item from gist list */
     gist.removeHtmlObjFromList(idx);
  
     /* Remove old favorites table */
-    var idName = document.getElementById('favoritesList');
-    deleteTable(idName);
+    deleteTable(favor);
  
     /* Update favorites table */
-    generate_table(favor.list, idName);
+    generate_table(favor);
     
     /* Update search table */
-    var idName = document.getElementById('searchResults');
-    deleteTable(idName);
-    generate_table(gist.list, idName);
+    deleteTable(gist);
+    generate_table(gist);
   }
 }
 
 /* Handle removing from the favorites */
 handleChkBoxFavorites = function() {
   /* Find the checked item */
-  var idx = favor.list.length;
-  for (var i = 0; i < favor.list.length; i++)
+  /* Find the checked item */
+  var idx = getCheckedListItem(favor);
+  if (idx >= 0) 
   {
-    var id = document.getElementById(["fav_" + i]);
-    if (id.checked)
-    {
-      /* Remove item from favorites */
-      idx = i;
-    }
-  }
-
-  if (idx < favor.list.length) {
+    /* Remove item from favorites */
     favor.removeHtmlObjFromList(idx);
     
     /* Resave favorites */
     saveLocalSearch();
     
     /* Update favorites table */
-    var idName = document.getElementById('favoritesList');
-    deleteTable(idName);
-    generate_table(favor.list, idName);
+    deleteTable(favor);
+    generate_table(favor);
   }
 }
 
@@ -320,16 +313,15 @@ window.onload = function() {
   document.getElementById('output').innerHTML
  
   var settingsStr = getLocalStorage();
-  
-  for (var i = 0; i < settingsStr[1].length; i++)
+ 
+  for (var i = 0; i < settingsStr[1].list.length; i++)
   {
-    var newFavorite = new HtmlObject(settingsStr[1][i]);
-    favor.list.push(newFavorite);
+    favor.list.push(settingsStr[1].list[i]);
   }
 
   /* Update Favorites list */
   var idName = document.getElementById('favoritesList'); 
-  generate_table(favor.list, idName);
+  generate_table(favor);
 
   searchParams.refreshSearch();
 }
@@ -345,7 +337,7 @@ function saveLocalSearch() {
       searchParams.language = document.getElementsByName('language_input')[i].value;
     }
   }
-  var userSettings=[searchParams,favor.list];
+  var userSettings=[searchParams,favor];
   localStorage.setItem('userSettings',JSON.stringify(userSettings));
 }
     
