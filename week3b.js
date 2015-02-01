@@ -30,8 +30,9 @@ function HtmlObject(params) {
 }
 
 /* use to store array of Html Objects */
-function HtmlObjList() {
+function HtmlObjList(id) {
   this.list = new Array();
+  this.id = id
 
   this.loadHtmlObjList = function(arrHtmlObj){
     this.list = arrHtmlObj;
@@ -42,46 +43,93 @@ function HtmlObjList() {
     this.list.push(htmlObj);
     return(this.list);
   }
-  
 }
+
+var convertGistPageToList = function(req,obj) {
+    /* define HTTP response as a JavaScript object */
+    var testJSON = JSON.parse(req.responseText);
+    console.log(testJSON);
+    /* search for html_url, description, language under files.file name object.language */
+    /* if description is empty set to "generic gist" */
+    for (var i = 0; i < testJSON.length; i++)
+    {
+      /*Reference: */
+      /* https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...in */
+      for (var prop in testJSON[i]) {
+        if (prop === 'html_url')
+        {
+          var htmlUrl = testJSON[i].html_url;
+        }
+        if (prop === 'description')
+        {
+          var desc = testJSON[i].description;
+        }
+      }
+      if (!(htmlUrl) || (htmlUrl == null))
+      {
+          htmlUrl = "https://gist.github.com";
+      }
+      if (!(desc) || (htmlUrl == null))
+      {
+          desc = "generic description text";
+      }
+      for (var prop in testJSON[i].files) {
+        for (var subProp in testJSON[i].files[prop])
+          if (subProp === 'language')
+          {
+            var language = testJSON[i].files[prop][subProp];
+          }
+      }
+      if (!(language) || (language == null))
+      {
+          language = "Unknown";
+      }
+      var newGistObj = new HtmlObject({name:language,description:desc,url:htmlUrl});
+      
+      if ((searchParams.language === "All") || (newGistObj.name === searchParams.language))
+      {
+        obj.list.push(newGistObj);
+      }
+    }
+    /* Generate the table with results */
+    searchParams.refreshSearch();
+    var idName = document.getElementById('searchResults');
+    generate_table(obj.list, idName);
+};
+
 
 function Search()
 {
   page: 1;
   language: 'ALL';
+  
+  this.refreshSearch = function() {
+    this.page = document.getElementsByName('page_input')[0].value;
+    var languageTag = document.getElementsByName('language_input')
+    for (var i = 0; i < languageTag.length; i++)
+    {
+      if (languageTag[i].checked)
+      {
+        this.language = document.getElementsByName('language_input')[i].value;
+      }
+    }
+  };
+  
 };
 
-var searchParams = new Search;
+
+/* Create the objects to keep track of this page */
+var searchParams = new Search();
 var gistPages = new GistPages;
+favor = new HtmlObjList('favoritesList');
+gist = new HtmlObjList('searchResults');
 
 
-/* temporary - create some object literals to use in loading testing */
-favor = new HtmlObjList();
-h1 = new HtmlObject({name:'test1.html',description:'This is my test',url:'\\github.com'});;
-h2 = new HtmlObject({name:'test2.html',description:'This is my test',url:'\\github.com'});;
-h3 = new HtmlObject({name:'test3.html',description:'This is my test',url:'\\github.com'});;
-favor.list.push(h1);
-favor.list.push(h2);
-favor.list.push(h3);
-
-/* temporary - create some object literals to use in loading testing */
-gist = new HtmlObjList();
-h4 = new HtmlObject({name:'test4.html',description:'This is my test',url:'\\github.com'});;
-h5 = new HtmlObject({name:'test5.html',description:'This is my test',url:'\\github.com'});;
-h6 = new HtmlObject({name:'test6.html',description:'This is my test',url:'\\github.com'});;
-gist.list.push(h1);
-gist.list.push(h2);
-gist.list.push(h3);
-gist.list.push(h4);
-gist.list.push(h5);
-gist.list.push(h6);
 
 /* Generate a table around HtmlObjList */
+/* Reference: */
+/* https://developer.mozilla.org/en-US/docs/Traversing_an_HTML_table_with_JavaScript_and_DOM_Interfaces */
 function generate_table(arr,idName) {
-  // arr is an array of HtmlObjList elements
-  // get the reference for the body
-//  var body = document.getElementsByTagName("body")[0];
-  
   // creates a <table> element and a <tbody> element
   var tbl = document.createElement('table');
   var tblHeader = document.createElement('thead');
@@ -90,13 +138,27 @@ function generate_table(arr,idName) {
   // Define header row
   var row = document.createElement("tr");
   var tblHead1 = document.createElement("th");
-  tblHead1.innerHTML = "Name";
+  if (idName.id === 'searchResults') {
+      tblHead1.innerHTML = "Select Favorite";
+  } else {
+      tblHead1.innerHTML = "Remove Favorite";   
+  }
+  
   row.appendChild(tblHead1);
   
   var tblHead2 = document.createElement("th");
-  tblHead2.innerHTML = "Description";
+  tblHead2.innerHTML = "Language";
   row.appendChild(tblHead2);
+  
+  var tblHead3 = document.createElement("th");
+  tblHead3.innerHTML = "Description";
+  row.appendChild(tblHead3);
   tblHeader.appendChild(row);
+  
+  var tblHead4 = document.createElement("th");
+  tblHead4.innerHTML = "URL";
+  row.appendChild(tblHead4);
+  tblHeader.appendChild(row); 
   
   // creating all cells
   for (var i = 0; i < arr.length; i++) {
@@ -106,17 +168,24 @@ function generate_table(arr,idName) {
       // node the contents of the <td>, and put the <td> at
       // the end of the table row
     var cell1 = document.createElement("td");
-    var cellName = document.createTextNode(arr[i].name);
+    var cellChkBox = document.createElement("input");
+    cellChkBox.type = "checkbox";
+    cellChkBox.id = ["chk_" + i];
+    cellChkBox.checked = false;
     var cell2 = document.createElement("td");
-    var cellDescription = document.createTextNode(arr[i].description);
+    var cellName = document.createTextNode(arr[i].name);
     var cell3 = document.createElement("td");
+    var cellDescription = document.createTextNode(arr[i].description);
+    var cell4 = document.createElement("td");
     var cellLink = document.createTextNode(arr[i].url);
-    cell1.appendChild(cellName);
-    cell2.appendChild(cellDescription);
-    cell3.appendChild(cellLink);
+    cell1.appendChild(cellChkBox);
+    cell2.appendChild(cellName);
+    cell3.appendChild(cellDescription);
+    cell4.appendChild(cellLink);
     row.appendChild(cell1);
     row.appendChild(cell2);
     row.appendChild(cell3);
+    row.appendChild(cell4);
  
     // add the row to the end of the table body
     tblBody.appendChild(row);
@@ -129,11 +198,26 @@ function generate_table(arr,idName) {
   idName.appendChild(tbl);
   // sets the border attribute of tbl to 2;
   tbl.setAttribute("border", "2");
-
+  
+  // add event listener to checkbox
+  for (var i = 0; i < arr.length; i++) {
+    cellChkBoxId = document.getElementById(["chk_" + i]);
+    if (idName.id === 'searchResults') {
+        cellChkBoxId.onclick = handleChkBoxSearch;
+    } else {
+        cellChkBoxId.onclick = handleChkBoxFavorites;   
+    }
+  }
+  
 }
 
+handleChkBoxSearch = function() {
+  console.log("checked a Search");
+}
 
-
+handleChkBoxFavorites = function() {
+  console.log("checked a Favorite");
+}
 
 window.onload = function() {
 /* load local storage into object */
@@ -146,8 +230,7 @@ window.onload = function() {
     var idName = document.getElementById('favoritesList'); 
     generate_table(favor.list, idName);
 
-  searchParams = settingsStr[0];
-
+  searchParams.refreshSearch();
 }
 
 
@@ -184,7 +267,18 @@ function getLocalStorage(){
       userSettings.push(new Array);
       localStorage.setItem('userSettings',JSON.stringify(userSettings));
     }
- 
+    else
+    {
+      document.getElementsByName('page_input')[0].value = userSettings[0].page;
+      var languageTag = document.getElementsByName('language_input')
+      for (var i = 0; i < languageTag.length; i++)
+      {
+        if (languageTag[i].value === userSettings[0].language)
+        {
+           languageTag[i].checked = true;
+        }
+      }
+    }
     return(userSettings);
 }
   
@@ -203,8 +297,13 @@ function getGists() {
 /* Object to manage the list of pages */
 function GistPages() {
   this.reqPages = new Array;
-
+  
   this.loadGistPages = function() {
+    /* empty previous results - new request */
+    this.reqPages.length = 0;
+    gist.list.length = 0; /* empty list of previous results */
+    
+    /* search requests for each page */
     searchParams.page = document.getElementsByName('page_input')[0].value;
     for (var i = 0; i < searchParams.page; i++)
     {
@@ -216,60 +315,54 @@ function GistPages() {
 }
 
 /* Object to manage a request for a specific Gist page */
- function GistPage(page) {
+ function GistPage(pageNum) {
    this.httpRequest = new XMLHttpRequest();
-  
-   console.log(page);
+   this.page = pageNum;
 
-    if(!this.httpRequest){
+   if(!this.httpRequest){
       throw 'unable to create HttpRequest.';
     }
     // Copied from Nickolas Jurczak on Canvas Discussion
-    this.baseurl = 'http://api.github.com/gists/public';
-    this.url = this.baseurl + '?page=' + page + '&per_page=30';
+    // Setup the URL to make the request
+    this.baseurl = 'https://api.github.com/gists/public';
+    this.url = this.baseurl + '?page=' + pageNum + '&per_page=30';
+ 
+    /* Reference: */
+    /* https://developer.mozilla.org/en-US/docs/AJAX/Getting_Started */
+    /* function that will handle processing the response */
+    this.httpRequest.onreadystatechange = function() {
+      /* function to handle the request response */
+              /* check the response code */
+ 
+      if ((!(this) || (this === 'null')))
+      {
+          console.log("onreadystatechange called but request undefined or null");
+      }
+      else {
+        if (this.status === 200) {
+
+          if (this.readyState === 4) {
+              // everything is good, the response is received
+              //console.log(this.responseText);
+ 
+              /* Add to list of HtmlObjects */
+              convertGistPageToList(this,gist);
+          } else {
+            console.log("onreadystatechange called but not ready");
+          }
+        }
+        else
+        {
+            console.log("onreadystatechange called but not status = 200");
+        }
+      }
+    }
+
+    // make and send the request
     this.httpRequest.open('GET',this.url);
     // Example URL calls from assignment input:
     //httpRequest.open('GET','http://api.github.com/gists/public');
     //  httpRequest.open('GET','https://developer.github.com/v3/gists/#list-gists');
     this.httpRequest.send(); 
- 
-  /* Reference: */
-  /* https://developer.mozilla.org/en-US/docs/AJAX/Getting_Started */
-  /* function that will handle processing the response */
-  this.httpRequest.onreadystatechange = function() {
-    /* function to handle the request response */
-    if ((this.httpRequest !== 'undefined') && (this.httpRequest !== 'null'))
-    {
-      if (this.httpRequest.readyState === 4) {
-          // everything is good, the response is received
-          console.log(this.httpRequest.responseText);
-          /* define HTTP response as a JavaScript object */
-          var testJSON = JSON.parse(this.httpRequest.responseText);
      
-          /* Add to list of HtmlObjects */
-     
-          
-     
-          /* Generate the table with results */
-          var idName = document.getElementById('searchResults');
-          generate_table(gist.list, idName);
-      } else {
-          // still not ready
-      }
-
-        /* check the response code */
-        if (this.httpRequest.status === 200) {
-            // perfect!
-        } else {
-            // there was a problem with the request,
-            // for example the response may contain a 404 (Not Found)
-            // or 500 (Internal Server Error) response code
-        }
-      }
-      else {
-        console.log('onreadystatechange called but request not defined');
-      }
-  };
-  
-   
 };
