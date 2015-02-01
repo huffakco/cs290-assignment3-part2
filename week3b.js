@@ -27,28 +27,31 @@ function HtmlObject(params) {
   this.name = params.name;
   this.description = params.description;
   this.url = params.url;  
+  this.openGitPage = function() {
+    console.log("double click");
+  }
 }
 
 /* use to store array of Html Objects */
-function HtmlObjList(id) {
+function HtmlObjList() {
   this.list = new Array();
-  this.id = id
+ 
+  this.removeHtmlObjFromList = function(id){
+    for (var i = id; i < this.list.length; i++)
+    {
+      this.list[i] = this.list[i+1];
+    }
+    this.list.pop();
+  }
+    
 
-  this.loadHtmlObjList = function(arrHtmlObj){
-    this.list = arrHtmlObj;
-    return(this.list);
-  }
-  
-  this.addHtmlObject = function(htmlObj){
-    this.list.push(htmlObj);
-    return(this.list);
-  }
 }
 
 var convertGistPageToList = function(req,obj) {
     /* define HTTP response as a JavaScript object */
     var testJSON = JSON.parse(req.responseText);
     console.log(testJSON);
+    searchParams.refreshSearch();
     /* search for html_url, description, language under files.file name object.language */
     /* if description is empty set to "generic gist" */
     for (var i = 0; i < testJSON.length; i++)
@@ -91,9 +94,10 @@ var convertGistPageToList = function(req,obj) {
         obj.list.push(newGistObj);
       }
     }
+
     /* Generate the table with results */
-    searchParams.refreshSearch();
     var idName = document.getElementById('searchResults');
+    deleteTable(idName);
     generate_table(obj.list, idName);
 };
 
@@ -121,8 +125,8 @@ function Search()
 /* Create the objects to keep track of this page */
 var searchParams = new Search();
 var gistPages = new GistPages;
-favor = new HtmlObjList('favoritesList');
-gist = new HtmlObjList('searchResults');
+favor = new HtmlObjList();
+gist = new HtmlObjList();
 
 
 
@@ -139,9 +143,13 @@ function generate_table(arr,idName) {
   var row = document.createElement("tr");
   var tblHead1 = document.createElement("th");
   if (idName.id === 'searchResults') {
-      tblHead1.innerHTML = "Select Favorite";
+    tbl.id = "searchTable";
+    tblID = "srch";
+    tblHead1.innerHTML = "Select Favorite";    
   } else {
-      tblHead1.innerHTML = "Remove Favorite";   
+    tblHead1.innerHTML = "Remove Favorite";   
+    tbl.id = "favoriteTable";
+    tblID = "fav";
   }
   
   row.appendChild(tblHead1);
@@ -155,38 +163,47 @@ function generate_table(arr,idName) {
   row.appendChild(tblHead3);
   tblHeader.appendChild(row);
   
-  var tblHead4 = document.createElement("th");
-  tblHead4.innerHTML = "URL";
-  row.appendChild(tblHead4);
   tblHeader.appendChild(row); 
   
   // creating all cells
   for (var i = 0; i < arr.length; i++) {
     // creates a table row
     var row = document.createElement("tr");
-      // Create a <td> element and a text node, make the text
+     // Create a <td> element and a text node, make the text
       // node the contents of the <td>, and put the <td> at
       // the end of the table row
     var cell1 = document.createElement("td");
     var cellChkBox = document.createElement("input");
     cellChkBox.type = "checkbox";
-    cellChkBox.id = ["chk_" + i];
+    cellChkBox.id = [tblID + "_" + i];
     cellChkBox.checked = false;
     var cell2 = document.createElement("td");
     var cellName = document.createTextNode(arr[i].name);
     var cell3 = document.createElement("td");
-    var cellDescription = document.createTextNode(arr[i].description);
-    var cell4 = document.createElement("td");
-    var cellLink = document.createTextNode(arr[i].url);
+    //var list1 = document.createElement("dl");
+    //var listDesc = document.createElement("dt");
+    var listLink = document.createElement("a");
+    listLink.id = [tblID + "lnk_" + i];
+    listLink.href = arr[i].url;
+    listLink.innerText = arr[i].description;
+    //var cellDescription = document.createTextNode(arr[i].description);
+    //listDesc.innerHTML = arr[i].description;
+    //var listUrl = document.createElement("dd");
+    //listUrl.innerHTML = arr[i].url;
+    
+//      <dl>
+//      <dt>List Item 1</dt>
+//      <dd>Sub List Item 1</dd>
+    //list1.appendChild(listDesc);
+    //list1.appendChild(listUrl);
+    //list1.appendChild(listLink);
     cell1.appendChild(cellChkBox);
     cell2.appendChild(cellName);
-    cell3.appendChild(cellDescription);
-    cell4.appendChild(cellLink);
+    cell3.appendChild(listLink);
     row.appendChild(cell1);
     row.appendChild(cell2);
     row.appendChild(cell3);
-    row.appendChild(cell4);
- 
+
     // add the row to the end of the table body
     tblBody.appendChild(row);
   }
@@ -199,24 +216,103 @@ function generate_table(arr,idName) {
   // sets the border attribute of tbl to 2;
   tbl.setAttribute("border", "2");
   
-  // add event listener to checkbox
+  // add event listener to checkbox and link
   for (var i = 0; i < arr.length; i++) {
-    cellChkBoxId = document.getElementById(["chk_" + i]);
+    cellChkBoxId = document.getElementById([tblID + "_" + i]);
     if (idName.id === 'searchResults') {
         cellChkBoxId.onclick = handleChkBoxSearch;
     } else {
         cellChkBoxId.onclick = handleChkBoxFavorites;   
     }
+    linkClickId = document.getElementById([tblID + "lnk_" + i]);
+    linkClickId.ondblclick = linkClickId.href;
   }
+}
+
+function deleteTable(idName) {
+ // idName.innerHTML = '';
+  if (idName.id === 'searchResults') {
+    tblId = "searchTable";
+  } else {
+    tblId = "favoriteTable";
+  }
+  var tableId = document.getElementById(tblId);
+  if (tableId)
+  {
+    for (var i = 0; i < tableId.rows.length; i++) {
+        tableId.deleteRow(i);
+    }
+    tableId.deleteTHead();
+    idName.innerHTML = '';
+  }
+}
+
   
-}
-
+/* Handle updating the Search and moving to favorites */
 handleChkBoxSearch = function() {
-  console.log("checked a Search");
+  /* Find the checked item */
+  var idx = gist.list.length;
+  for (var i = 0; i < gist.list.length; i++)
+  {
+    var id = document.getElementById(["srch_" + i]);
+    if (id.checked)
+    {
+      /* Add item to favorites (indexed in gist object) */
+      var tmpObj = new HtmlObject({
+          name:gist.list[i].name,
+          description:gist.list[i].description ,
+          url:gist.list[i].url});
+      favor.list.push(tmpObj);
+      idx = i;
+    }
+  }
+
+  if (idx < gist.list.length) {
+    /* Resave favorites */
+    saveLocalSearch();
+  
+   /* Remove item from gist list */
+    gist.removeHtmlObjFromList(idx);
+ 
+    /* Remove old favorites table */
+    var idName = document.getElementById('favoritesList');
+    deleteTable(idName);
+ 
+    /* Update favorites table */
+    generate_table(favor.list, idName);
+    
+    /* Update search table */
+    var idName = document.getElementById('searchResults');
+    deleteTable(idName);
+    generate_table(gist.list, idName);
+  }
 }
 
+/* Handle removing from the favorites */
 handleChkBoxFavorites = function() {
-  console.log("checked a Favorite");
+  /* Find the checked item */
+  var idx = favor.list.length;
+  for (var i = 0; i < favor.list.length; i++)
+  {
+    var id = document.getElementById(["fav_" + i]);
+    if (id.checked)
+    {
+      /* Remove item from favorites */
+      idx = i;
+    }
+  }
+
+  if (idx < favor.list.length) {
+    favor.removeHtmlObjFromList(idx);
+    
+    /* Resave favorites */
+    saveLocalSearch();
+    
+    /* Update favorites table */
+    var idName = document.getElementById('favoritesList');
+    deleteTable(idName);
+    generate_table(favor.list, idName);
+  }
 }
 
 window.onload = function() {
@@ -224,11 +320,16 @@ window.onload = function() {
   document.getElementById('output').innerHTML
  
   var settingsStr = getLocalStorage();
- 
+  
+  for (var i = 0; i < settingsStr[1].length; i++)
+  {
+    var newFavorite = new HtmlObject(settingsStr[1][i]);
+    favor.list.push(newFavorite);
+  }
 
   /* Update Favorites list */
-    var idName = document.getElementById('favoritesList'); 
-    generate_table(favor.list, idName);
+  var idName = document.getElementById('favoritesList'); 
+  generate_table(favor.list, idName);
 
   searchParams.refreshSearch();
 }

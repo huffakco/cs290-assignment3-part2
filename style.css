@@ -30,23 +30,22 @@ th {
 
 /* make first column italic */
 tbody > tr > th:nth-child(1) {
-  font-style: italic;
-  font-weight: normal;
+   width: 1em;
 }
 
 /* make the second column data items blue */
-tbody > tr > td:nth-child(2) {
-  color: #f00;  
-}
+/* tbody > tr > td:nth-child(2) {
+  color: #00f;  
+} */
 
 /* make the third column data items blue */
-tbody > tr > td:nth-child(4){
+/* tbody > tr > td:nth-child(4){
   color: #00f;   
-}
+} */
 
-/* make the background of the odd rows light blue */
+/* make the background of the odd rows navy blue */
 tbody > tr:nth-child(odd) {
- background-color: #9cf;
+ background-color: #79f;
 }
 
 /* make the background of the even rows light green */
@@ -59,53 +58,25 @@ tbody tr:nth-child(1) th{
  background-color: #fff; /*white*/
  font-weight: bold;
 }
+
+dl dd {
+  display: none;
+}
     
-/* Part 2: List */
 dl {
-  /* Separate the assignment sections */
-  left: 10px;
   margin: 0;
   padding:0;
   position: relative;
-  top: 10px;
 }
 
-/* Reference hover property and the sub-list element */
-/* Note class discussion eventually covered this method */
-dt:hover+dd {
-  background-color: #808;
+/* Reference hover property */
+/* Class video covered this method */
+a:hover {
+  background-color: #9ff;
+  display: a.href;
 }
 
-/* Part 3: Boxes */
-/* not using div in selector per google-styleguide */
-.outer-content {
-  /* text box size and position */
-  /* text box spacing - 20px requirement */
-  /* text box color */
-  background-color: #f9b;  /*pink*/
-  height: 3em; 
-  left: 0;
-  margin-bottom: 20px;
-  margin-top: 20px;
-  position: relative;
-  padding: 0;
-  text-align: center;
-  width: 75%;
 
-}
-
-.inner-content{  
-  /* text box size and position */
-  /* text box color */
-  background-color: #0af;  /*lighter blue*/
-  float: center;
-  left: 12.5%;
-  /*height: 33%;*/
-  position: relative;
-  text-align: center;
-  top: 33%;
-  width: 75%;
-}
 
 /* Part 4: Forms */
 /*Form 1 Reference My first HTML form - Web developer guide at https:://developer.mozilla.org/en-US/docs/Web Guide HTML/Forms/ */
@@ -129,8 +100,9 @@ form div  + div {
 label {
   /* To make sure that all labels have the same size and are properly aligned */
   display: inline-block;
-  text-align: right;
-  width: 5em;
+  font-weight: bold;
+  text-align: left;
+  width: 10em;
 }
 
 input, textarea {
@@ -138,7 +110,7 @@ input, textarea {
   border: 2px solid #777;
 
   /* text box size */
-  min-width: 20em;
+  min-width: 1em;
 }
 
 input:focus, textarea:focus {
@@ -167,25 +139,4 @@ fieldset > div > fieldset > input {
 fieldset > div > fieldset > label {
   /* align the labels with radio buttons */
   text-align: left;
-}
-
-/* Part 5: Image and Paragraph */
-img {
-  /* position the image an make floating */
-  /* set width and height to 100x125 including border */
-  border: 1px solid #777;
-  float: left;
-  height: 123px;
-  margin: 0;
-  padding: 0;
-  position: relative;
-  width: 98px;
-}
-
-
-body > div > p {
-  /* position two paragraphs of text */
-  margin: 0;
-  padding: 0;
-  position: relative;
 }
